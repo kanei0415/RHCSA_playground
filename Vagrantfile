@@ -2,7 +2,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "almalinux/9"
 
   config.vm.network "public_network"
-  config.vm.network "public_network"
 
   config.vm.provider :vmware_desktop do |vmware|
     vmware.vmx["ethernet0.pcislotnumber"] = "160"
