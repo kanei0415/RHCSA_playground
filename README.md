@@ -1,6 +1,6 @@
 ### Vagrant
 ```terminal
-vagrant up --provider vmware_desktop
+vagrant up --parallel --provider vmware_desktop
 ```
 ```terminal
 vagrant destroy -f
