@@ -9,14 +9,22 @@ Vagrant.configure("2") do |config|
     vmware.vmx["ethernet1.pcislotnumber"] = "224"
   end
 
-  (1..2).each do |i|
-    config.vm.define "server-0#{i}" do |server|
-      server.vm.hostname = "server-0#{i}"
-      
-      server.vm.provider "vmware_desktop" do |v|
-        v.cpus = 4
-        v.memory = 4096
-      end
+
+  config.vm.define "server-01" do |server1|
+    server1.vm.hostname = "server-01"
+    
+    server1.vm.provider "vmware_desktop" do |v|
+      v.cpus = 4
+      v.memory = 4096
+    end
+  end
+
+  config.vm.define "server-02" do |server2|
+    server2.vm.hostname = "server-02"
+    
+    server2.vm.provider "vmware_desktop" do |v|
+      v.cpus = 4
+      v.memory = 4096
     end
   end
 end
