@@ -10,19 +10,19 @@ Vagrant.configure("2") do |config|
   end
 
 
-  config.vm.define "server-01" do |server1|
-    server1.vm.hostname = "server-01"
+  config.vm.define "server-a" do |servera|
+    servera.vm.hostname = "server-a"
     
-    server1.vm.provider "vmware_desktop" do |v|
+    servera.vm.provider "vmware_desktop" do |v|
       v.cpus = 4
       v.memory = 4096
     end
   end
 
-  config.vm.define "server-02" do |server2|
-    server2.vm.hostname = "server-02"
+  config.vm.define "server-b" do |serverb|
+    serverb.vm.hostname = "server-b"
     
-    server2.vm.provider "vmware_desktop" do |v|
+    serverb.vm.provider "vmware_desktop" do |v|
       v.cpus = 4
       v.memory = 4096
     end

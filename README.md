@@ -1,6 +1,6 @@
 ### Vagrant
 ```terminal
-vagrant up --parallel --provider vmware_desktop
+vagrant --parallel up --provider vmware_desktop
 ```
 ```terminal
 vagrant destroy -f
@@ -16,6 +16,6 @@ vagrant provision
 vagrant status
 ```
 ```terminal
-vagrant ssh server-01
-vagrant ssh server-02
+vagrant ssh server-a
+vagrant ssh server-b
 ```
