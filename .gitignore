@@ -1,5 +1,8 @@
 ssh_config
-
 .vagrant
-
 .secrets
+.ssh
+docs
+tmp
+CLAUDE.md
+.ansible

@@ -1,0 +1,59 @@
+---
+# lockdown.yaml — Ansible セットアップ完了後に SSH キーを削除し、
+# パスワード認証のみに戻す。RHCSA 試験環境に近い状態を作る。
+#
+# 実行タイミング: make bootstrap の後
+# 実行方法: make lockdown  (--ask-pass が必要)
+
+- name: SSH キー削除 — パスワード認証のみに戻す (RHCSA exam state)
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: tester の authorized_keys を削除
+      ansible.builtin.file:
+        path: /home/tester/.ssh/authorized_keys
+        state: absent
+
+    - name: tester の .ssh ディレクトリを削除（空にする）
+      ansible.builtin.file:
+        path: /home/tester/.ssh
+        state: absent
+
+    - name: PasswordAuthentication を有効化（パスワードでのみ接続可能）
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+      notify: sshd restart
+
+    - name: PubkeyAuthentication を有効化（キーは未登録 — 試験でのセットアップ用）
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PubkeyAuthentication'
+        line: 'PubkeyAuthentication yes'
+        state: present
+      notify: sshd restart
+
+    - name: root SSH ログインが無効であることを確認
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: sshd restart
+
+    - name: ロックダウン完了メッセージ
+      ansible.builtin.debug:
+        msg: |
+          [{{ inventory_hostname }}] SSH キー削除完了
+          接続方法: ssh tester@<ip>  パスワード: testpass
+          Ansible からの操作は --ask-pass が必要になります
+
+  handlers:
+    - name: sshd restart
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

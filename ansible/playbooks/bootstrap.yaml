@@ -1,0 +1,84 @@
+---
+# Bootstrap playbook — RHCSA Simulator
+# Verifies and completes the exam environment setup on node1 and node2.
+# Run: make bootstrap  (from project root)
+
+- name: node1 — Verify exam state (network unconfigured, base packages)
+  hosts: node1
+  gather_facts: true
+
+  tasks:
+    - name: Ensure autofs is installed
+      ansible.builtin.package:
+        name:
+          - autofs
+          - nfs-utils
+          - tar
+          - gzip
+          - bzip2
+        state: present
+
+    - name: Ensure /etc/hosts has node2 entry
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars['node2']['ansible_host'] | default('192.168.56.102') }} node2.example.com node2"
+        state: present
+
+    - name: Confirm second NIC is not configured
+      ansible.builtin.command: nmcli dev status
+      register: nic_status
+      changed_when: false
+
+    - name: Report NIC status
+      ansible.builtin.debug:
+        msg: "NIC status:\n{{ nic_status.stdout }}"
+
+- name: node2 — Verify exam state (NFS, extra disks, podman)
+  hosts: node2
+  gather_facts: true
+
+  tasks:
+    - name: Ensure NFS server packages are installed
+      ansible.builtin.package:
+        name:
+          - nfs-utils
+          - rpcbind
+          - lvm2
+          - podman
+        state: present
+
+    - name: Ensure /exports/data exists
+      ansible.builtin.file:
+        path: /exports/data
+        state: directory
+        mode: "0755"
+
+    - name: Ensure /etc/exports is configured
+      ansible.builtin.copy:
+        dest: /etc/exports
+        content: "/exports/data 192.168.56.0/24(rw,sync,no_root_squash)\n"
+        mode: "0644"
+      notify: Reload NFS exports
+
+    - name: Ensure NFS server is running
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - rpcbind
+        - nfs-server
+
+    - name: Show extra disks
+      ansible.builtin.command: lsblk
+      register: lsblk_out
+      changed_when: false
+
+    - name: Report disk layout
+      ansible.builtin.debug:
+        msg: "Disk layout:\n{{ lsblk_out.stdout }}"
+
+  handlers:
+    - name: Reload NFS exports
+      ansible.builtin.command: exportfs -r
+      changed_when: true

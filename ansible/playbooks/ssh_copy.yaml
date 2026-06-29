@@ -1,0 +1,50 @@
+---
+# ssh_copy.yaml — ローカルの SSH 公開キーを tester ユーザーに配布する
+# 用途: Ansible がキー認証で接続できるよう一時的にセットアップする
+# 注意: Ansible 作業完了後は make lockdown でキーを削除してください
+
+- name: SSH 公開キー配布 (Ansible 作業用・一時的)
+  hosts: all
+  gather_facts: false
+  become: true
+
+  vars:
+    ssh_target_user: tester
+    local_pubkey: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+
+  tasks:
+    - name: tester の .ssh ディレクトリを作成
+      ansible.builtin.file:
+        path: /home/{{ ssh_target_user }}/.ssh
+        state: directory
+        owner: "{{ ssh_target_user }}"
+        group: "{{ ssh_target_user }}"
+        mode: "0700"
+
+    - name: SSH 公開キーを authorized_keys に登録
+      ansible.posix.authorized_key:
+        user: "{{ ssh_target_user }}"
+        state: present
+        key: "{{ local_pubkey }}"
+
+    - name: sshd_config — PubkeyAuthentication 有効化
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PubkeyAuthentication'
+        line: 'PubkeyAuthentication yes'
+        state: present
+      notify: sshd restart
+
+    - name: sshd_config — PasswordAuthentication は有効のまま維持
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+      notify: sshd restart
+
+  handlers:
+    - name: sshd restart
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

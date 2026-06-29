@@ -1,0 +1,25 @@
+---
+# SSH 鍵認証 role タスク
+# このファイルは site.yaml から roles: - ssh で呼び出されます
+
+- name: SSH 公開鍵をリモートホストの authorized_keys に登録
+  ansible.posix.authorized_key:
+    user: "{{ ssh_target_user | default('root') }}"
+    state: present
+    key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+
+- name: sshd_config - PubkeyAuthentication を有効化
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication'
+    line: 'PubkeyAuthentication yes'
+    state: present
+  notify: sshd 再起動
+
+- name: sshd_config - PasswordAuthentication を無効化
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+  notify: sshd 再起動

@@ -1,0 +1,14 @@
+---
+- name: SSH 鍵認証の設定
+  hosts: all
+  gather_facts: false
+  become: true
+
+  handlers:
+    - name: sshd 再起動
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+
+  roles:
+    - ssh
